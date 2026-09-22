@@ -1,0 +1,52 @@
+@model List<ConciliacionSiapSafi.Models.ResultadoConciliacion>
+@{
+    ViewData["Title"] = "Resultado de la conciliación";
+}
+
+<h1>Resultado de la conciliación</h1>
+
+<p>
+    SIAP: <strong>@ViewBag.TotalSiap</strong> filas con contrato &nbsp;|&nbsp;
+    SAFI: <strong>@ViewBag.TotalSafi</strong> transacciones &nbsp;|&nbsp;
+    Total filas de resultado: <strong>@Model.Count</strong>
+</p>
+
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-size:13px;">
+    <thead style="background:#eef2f6;">
+        <tr>
+            <th>Actividad</th>
+            <th>Descripción</th>
+            <th>Código SIAP</th>
+            <th>Código SAFI</th>
+            <th>Monto SIAP</th>
+            <th>Monto SAFI</th>
+            <th>Método</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            var color = r.Estado switch
+            {
+                "Vinculado" => "#2f6b4f",
+                "Diferencia" => "#a63d33",
+                _ => "#b8893c"
+            };
+            <tr>
+                <td>@r.Actividad</td>
+                <td style="max-width:280px;">@r.ActividadDescripcion</td>
+                <td>@r.CodigoSiap</td>
+                <td>@r.CodigoSafi</td>
+                <td>@r.MontoSiap.ToString("N2")</td>
+                <td>@r.MontoSafi.ToString("N2")</td>
+                <td>@r.MetodoVinculo</td>
+                <td style="color:@color; font-weight:bold;">@r.Estado</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p style="margin-top:20px;">
+    <a asp-action="Index">← Subir otros archivos</a>
+</p>

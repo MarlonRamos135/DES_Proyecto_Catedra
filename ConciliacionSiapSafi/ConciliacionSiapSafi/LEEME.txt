@@ -1,0 +1,40 @@
+CÓMO CORRER ESTE PROGRAMA DE PRUEBA EN WINDOWS
+================================================
+
+1. Instala el .NET SDK 8 (si no lo tienes):
+   https://dotnet.microsoft.com/download/dotnet/8.0
+   Confirma con: dotnet --version  (debe mostrar 8.x.x)
+
+2. Descomprime esta carpeta, por ejemplo en:
+       C:\Proyectos\ConciliacionSiapSafi
+
+3. Abre PowerShell o CMD, entra a la carpeta:
+       cd C:\Proyectos\ConciliacionSiapSafi
+
+4. Corre el proyecto (esta versión NO necesita paquetes de NuGet,
+   así que no requiere internet para restaurar nada):
+       dotnet run
+
+5. Abre en el navegador la URL que aparezca (https://localhost:xxxx).
+
+
+QUÉ CAMBIÓ RESPECTO A LA VERSIÓN ANTERIOR
+-------------------------------------------
+- Los archivos ahora son .csv (no .xlsx), ya no se usa ClosedXML.
+- El código de contrato se extrae con una expresión regular que ignora
+  errores de digitación en el prefijo (MINEDUCTY, MINEDCUYT, etc.) y
+  sufijos variables (-BIRF, " BIRF 9067 SV", etc.), buscando el patrón
+  número/año en cualquier parte del texto.
+- Cuando el código de SIAP no trae año (pasa en 58% de los casos, ej.
+  "07" en vez de "07/2026"), se completa con la columna 'Año fiscal'
+  de la misma fila.
+- Cuando el código de SAFI no tiene ningún patrón número/año (ej. un
+  número interno como "123917"), se intenta vincular por NIT del
+  proveedor + monto (con 1% de tolerancia), según lo que definiste.
+- Si un mismo contrato aplica a varias Actividades de SIAP, cada una
+  muestra el monto comprometido completo (no se divide).
+- El estado "Vinculado" ahora solo indica que se encontró el contrato,
+  sin comparar montos: el 'Monto de Contrato' de SIAP es el valor total
+  adjudicado y el 'Comprometido' de SAFI es lo acumulado a la fecha,
+  así que casi nunca van a ser iguales aunque el vínculo sea correcto.
+

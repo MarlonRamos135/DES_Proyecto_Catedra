@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Conciliación SIAP / SAFI";
+}
+
+<h1>Conciliación de contratos — SIAP / SAFI</h1>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div style="color:#a63d33; margin-bottom:16px;">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+<form asp-action="Comparar" method="post" enctype="multipart/form-data">
+    <div style="margin-bottom:16px;">
+        <label style="display:block; font-weight:bold;">Archivo SIAP (Seguimiento de Planes Operativos, .csv)</label>
+        <input type="file" name="archivoSiap" accept=".csv" required />
+    </div>
+
+    <div style="margin-bottom:16px;">
+        <label style="display:block; font-weight:bold;">Archivo SAFI (Informe de Compromisos, .csv)</label>
+        <input type="file" name="archivoSafi" accept=".csv" required />
+    </div>
+
+    <button type="submit" style="padding:10px 20px; background:#1d4e89; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+        Vincular por Actividad
+    </button>
+</form>
+
+<p style="margin-top:24px; color:#666; font-size:13px;">
+    Se espera el formato real de exportación: SIAP con columnas nombradas
+    (Actividad, Actividad descripción, Número de contrato, Monto de Contrato,
+    Nit proveedor, Nombre proveedor); SAFI con encabezado "Ejercicio;N. Compro;..."
+    y la columna "No. D. Resp" como código de contrato.
+</p>
