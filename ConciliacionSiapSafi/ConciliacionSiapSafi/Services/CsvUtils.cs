@@ -4,6 +4,19 @@ namespace ConciliacionSiapSafi.Services;
 // No soporta campos con saltos de línea dentro de comillas.
 public static class CsvUtils
 {
+    public static char DetectDelimiter(string line)
+    {
+        var delimitadores = new[] { ';', '|', ',', '-' };
+
+        foreach (var delimitador in delimitadores)
+        {
+            if (SplitLine(line, delimitador).Count > 1)
+                return delimitador;
+        }
+
+        return ' ';
+    }
+
     public static List<string> SplitLine(string line, char delimitador)
     {
         var campos = new List<string>();

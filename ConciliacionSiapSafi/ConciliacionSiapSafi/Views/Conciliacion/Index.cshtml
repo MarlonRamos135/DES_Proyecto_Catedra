@@ -16,13 +16,13 @@
 
 <form asp-action="Comparar" method="post" enctype="multipart/form-data">
     <div style="margin-bottom:16px;">
-        <label style="display:block; font-weight:bold;">Archivo SIAP (Seguimiento de Planes Operativos, .csv)</label>
-        <input type="file" name="archivoSiap" accept=".csv" required />
+        <label style="display:block; font-weight:bold;">Archivo SIAP (Seguimiento de Planes Operativos, .csv o .xlsx)</label>
+        <input type="file" name="archivoSiap" accept=".csv,.xlsx" required />
     </div>
 
     <div style="margin-bottom:16px;">
-        <label style="display:block; font-weight:bold;">Archivo SAFI (Informe de Compromisos, .csv)</label>
-        <input type="file" name="archivoSafi" accept=".csv" required />
+        <label style="display:block; font-weight:bold;">Archivo SAFI (Informe de Compromisos, .csv o .xlsx)</label>
+        <input type="file" name="archivoSafi" accept=".csv,.xlsx" required />
     </div>
 
     <button type="submit" style="padding:10px 20px; background:#1d4e89; color:#fff; border:none; border-radius:6px; cursor:pointer;">

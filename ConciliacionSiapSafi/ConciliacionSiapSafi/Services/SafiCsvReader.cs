@@ -16,11 +16,13 @@ public class SafiCsvReader
         using var reader = new StreamReader(archivo, encoding);
 
         List<string>? encabezados = null;
+        char delimitador = ';';
         string? linea;
 
         while ((linea = reader.ReadLine()) != null)
         {
-            var campos = CsvUtils.SplitLine(linea, ';');
+            delimitador = CsvUtils.DetectDelimiter(linea);
+            var campos = CsvUtils.SplitLine(linea, delimitador);
             if (campos.Count > 0 && campos[0].Trim().Equals("Ejercicio", StringComparison.OrdinalIgnoreCase))
             {
                 encabezados = campos;
@@ -48,7 +50,7 @@ public class SafiCsvReader
         {
             if (string.IsNullOrWhiteSpace(linea)) continue;
 
-            var campos = CsvUtils.SplitLine(linea, ';');
+            var campos = CsvUtils.SplitLine(linea, delimitador);
             if (campos.Count <= iComprometido) continue;
 
             var codigo = campos.ElementAtOrDefault(iCodigo)?.Trim() ?? "";

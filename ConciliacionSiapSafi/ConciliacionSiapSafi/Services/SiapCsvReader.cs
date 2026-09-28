@@ -17,7 +17,8 @@ public class SiapCsvReader
         var lineaEncabezado = reader.ReadLine();
         if (lineaEncabezado == null) return resultado;
 
-        var encabezados = CsvUtils.SplitLine(lineaEncabezado, ';');
+        var delimitador = CsvUtils.DetectDelimiter(lineaEncabezado);
+        var encabezados = CsvUtils.SplitLine(lineaEncabezado, delimitador);
 
         int IndiceDe(string nombreColumna)
         {
@@ -40,7 +41,7 @@ public class SiapCsvReader
         {
             if (string.IsNullOrWhiteSpace(linea)) continue;
 
-            var campos = CsvUtils.SplitLine(linea, ';');
+            var campos = CsvUtils.SplitLine(linea, delimitador);
             if (campos.Count <= iNumeroContrato) continue;
 
             var numeroContrato = campos[iNumeroContrato].Trim();

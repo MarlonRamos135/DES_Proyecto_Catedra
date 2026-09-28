@@ -11,6 +11,13 @@
     Total filas de resultado: <strong>@Model.Count</strong>
 </p>
 
+<form asp-action="ExportarExcel" method="post" style="margin-bottom:20px;">
+    <input type="hidden" name="datos" value='@System.Text.Json.JsonSerializer.Serialize(Model)' />
+    <button type="submit" style="padding:10px 20px; background:#2f6b4f; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+        Exportar a Excel
+    </button>
+</form>
+
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse; width:100%; font-size:13px;">
     <thead style="background:#eef2f6;">
         <tr>

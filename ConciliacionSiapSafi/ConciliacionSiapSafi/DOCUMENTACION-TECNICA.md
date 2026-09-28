@@ -16,9 +16,9 @@ No usa base de datos: todo se procesa en memoria a partir de los dos CSV que se 
 ## 2. Flujo general
 
 ```
-Archivo SIAP (.csv) ─┐
+Archivo SIAP (.csv o .xlsx) ─┐
                       ├─► Lectura y parseo ─► Normalización de código ─► Conciliación ─► Vista de resultado
-Archivo SAFI (.csv) ─┘
+Archivo SAFI (.csv o .xlsx) ─┘
 ```
 
 Todo ocurre dentro de la misma petición HTTP (`POST /Conciliacion/Comparar`): no hay nada que se guarde entre una subida y otra.
@@ -34,9 +34,12 @@ ConciliacionSiapSafi/
 │   └── ContratoModels.cs           → todas las clases de datos (POCOs)
 ├── Services/
 │   ├── CsvUtils.cs                 → utilidades de bajo nivel (parseo de líneas y montos)
+│   ├── ExcelUtils.cs               → utilidades para leer filas de archivos XLSX
 │   ├── CodigoContratoNormalizer.cs → el corazón del sistema: unifica formatos de código
 │   ├── SiapCsvReader.cs            → lee el CSV de SIAP
 │   ├── SafiCsvReader.cs            → lee el CSV de SAFI
+│   ├── SiapXlsxReader.cs            → lee el XLSX de SIAP
+│   ├── SafiXlsxReader.cs            → lee el XLSX de SAFI
 │   └── ConciliacionService.cs      → agrupa, vincula y arma el resultado final
 └── Views/
     └── Conciliacion/
@@ -122,7 +125,7 @@ Al final, cualquier grupo de SAFI que **nunca** se haya vinculado a ninguna Acti
 
 `ConciliacionController` es deliberadamente delgado: no tiene lógica de negocio, solo recibe los dos `IFormFile`, llama a los lectores, llama al servicio de conciliación, y pasa el resultado a la vista. Si algo falla al leer un archivo (columna faltante, archivo corrupto), captura la excepción y la muestra como mensaje de error en el formulario en vez de tumbar la aplicación.
 
-`Index.cshtml` es el formulario de carga. `Resultado.cshtml` recibe la lista de `ResultadoConciliacion` como modelo fuertemente tipado y la pinta en una tabla, con color según el `Estado`.
+`Index.cshtml` es el formulario de carga y acepta archivos `.csv` y `.xlsx`. `Resultado.cshtml` recibe la lista de `ResultadoConciliacion` como modelo fuertemente tipado y la pinta en una tabla, con color según el `Estado`.
 
 ## 12. Supuestos y limitaciones conocidas
 
@@ -135,4 +138,4 @@ Para que nadie los descubra por sorpresa en producción:
 
 ## 13. Cómo correrlo
 
-Ver `LEEME.txt` en la raíz del proyecto — no requiere paquetes NuGet ni conexión a internet, solo el SDK de .NET 8.
+Ver `LEEME.txt` en la raíz del proyecto. La primera restauración requiere el paquete NuGet ClosedXML y el SDK de .NET 8.

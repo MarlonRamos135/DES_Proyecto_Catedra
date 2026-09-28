@@ -11,8 +11,8 @@ CÓMO CORRER ESTE PROGRAMA DE PRUEBA EN WINDOWS
 3. Abre PowerShell o CMD, entra a la carpeta:
        cd C:\Proyectos\ConciliacionSiapSafi
 
-4. Corre el proyecto (esta versión NO necesita paquetes de NuGet,
-   así que no requiere internet para restaurar nada):
+4. Corre el proyecto (la primera vez necesita internet para restaurar
+  el paquete ClosedXML):
        dotnet run
 
 5. Abre en el navegador la URL que aparezca (https://localhost:xxxx).
@@ -20,7 +20,8 @@ CÓMO CORRER ESTE PROGRAMA DE PRUEBA EN WINDOWS
 
 QUÉ CAMBIÓ RESPECTO A LA VERSIÓN ANTERIOR
 -------------------------------------------
-- Los archivos ahora son .csv (no .xlsx), ya no se usa ClosedXML.
+- Se aceptan archivos .csv y .xlsx para SIAP y SAFI. Los archivos XLSX
+  se leen usando el paquete ClosedXML.
 - El código de contrato se extrae con una expresión regular que ignora
   errores de digitación en el prefijo (MINEDUCTY, MINEDCUYT, etc.) y
   sufijos variables (-BIRF, " BIRF 9067 SV", etc.), buscando el patrón

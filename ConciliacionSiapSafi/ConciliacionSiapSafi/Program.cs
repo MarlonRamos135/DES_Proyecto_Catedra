@@ -13,7 +13,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<CodigoContratoNormalizer>();
 builder.Services.AddScoped<SiapCsvReader>();
 builder.Services.AddScoped<SafiCsvReader>();
+builder.Services.AddScoped<SiapXlsxReader>();
+builder.Services.AddScoped<SafiXlsxReader>();
 builder.Services.AddScoped<ConciliacionService>();
+builder.Services.AddScoped<ResultadoExcelExporter>();
 
 var app = builder.Build();
 
