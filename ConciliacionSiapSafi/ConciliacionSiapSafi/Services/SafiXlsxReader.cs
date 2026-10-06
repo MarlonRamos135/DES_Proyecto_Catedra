@@ -8,42 +8,98 @@ public class SafiXlsxReader
     public List<TransaccionSafi> Leer(Stream archivo)
     {
         using var libro = new XLWorkbook(archivo);
-        IXLWorksheet? hoja = null;
-        IXLRow? filaEncabezado = null;
+        var comprometido = LeerHoja(libro, "Comprometido");
+        var devengado = LeerHoja(libro, "Devengado");
+        var pagado = LeerHoja(libro, "Pagado");
 
-        foreach (var hojaActual in libro.Worksheets)
-        {
-            filaEncabezado = ExcelUtils.BuscarFila(hojaActual, encabezados =>
-                encabezados.Count > 0 && encabezados[0].Trim().Equals("Ejercicio", StringComparison.OrdinalIgnoreCase));
-            if (filaEncabezado != null)
+        var devPorCompromiso = devengado
+            .GroupBy(x => x.Compromiso, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => new
             {
-                hoja = hojaActual;
-                break;
+                NoDocuOrig = string.Join(" / ", g.Select(x => x.NoDocuOrig).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)),
+                Devengado = g.Sum(x => x.Devengado)
+            }, StringComparer.OrdinalIgnoreCase);
+
+        var pagadoPorDocumento = pagado
+            .GroupBy(x => x.NoDocuOrig, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Pagado), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var transaccion in comprometido)
+        {
+            if (devPorCompromiso.TryGetValue(transaccion.NoCompro, out var dev))
+            {
+                transaccion.NoDocuOrig = dev.NoDocuOrig;
+                transaccion.Devengado = dev.Devengado;
             }
+
+            transaccion.Pagado = transaccion.NoDocuOrig
+                .Split(" / ", StringSplitOptions.RemoveEmptyEntries)
+                .Sum(documento => pagadoPorDocumento.TryGetValue(documento, out var monto) ? monto : 0m);
         }
 
-        if (hoja == null || filaEncabezado == null)
-            throw new InvalidOperationException("No se encontró la fila de encabezado ('Ejercicio') en el archivo XLSX de SAFI.");
+        return comprometido;
+    }
+
+    private static List<TransaccionSafi> LeerHoja(XLWorkbook libro, string nombreHoja)
+    {
+        var hoja = libro.Worksheets.FirstOrDefault(x =>
+            x.Name.Trim().Equals(nombreHoja, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException($"No se encontró la hoja '{nombreHoja}' en el archivo XLSX de SAFI.");
+
+        var filaEncabezado = ExcelUtils.BuscarFila(hoja, encabezados =>
+            encabezados.Any(h => h.Trim().Equals("Ejercicio", StringComparison.OrdinalIgnoreCase)));
+        if (filaEncabezado == null)
+            throw new InvalidOperationException($"No se encontró el encabezado en la hoja '{nombreHoja}' del archivo SAFI.");
 
         var encabezados = ExcelUtils.ValoresDeFila(filaEncabezado);
-        int iCodigo = ExcelUtils.IndiceDe(encabezados, "No. D. Resp", "SAFI");
-        int iNit = ExcelUtils.IndiceDe(encabezados, "Nit", "SAFI");
-        int iProveedor = ExcelUtils.IndiceDe(encabezados, "Proveedor", "SAFI");
-        int iComprometido = ExcelUtils.IndiceDe(encabezados, "Comprometido", "SAFI");
+        int? IndiceOpcional(params string[] nombres) => ExcelUtils.IndiceOpcional(encabezados, nombres);
+
+        var indiceCompromiso = IndiceOpcional("Compromiso");
+        var indiceNoCompro = IndiceOpcional("N. Compro", "No. Compro", "No. D. Resp");
+        var indiceNoDocuOrig = IndiceOpcional("No. Docu. Orig", "No. Documento Orig");
+        var indiceNoDResp = IndiceOpcional("No. D. Resp");
+        var indiceNit = IndiceOpcional("Nit");
+        var indiceProveedor = IndiceOpcional("Proveedor");
+        var indiceFF = IndiceOpcional("F.F.");
+        var indiceProy = IndiceOpcional("Proy.");
+        var indiceFR = IndiceOpcional("F.R.");
+        var indiceAO = IndiceOpcional("A.O.");
+        var indiceComprometido = IndiceOpcional("Comprometido");
+        var indiceDescomp = IndiceOpcional("Descomp");
+        var indiceConcepto = IndiceOpcional("Concepto");
+        var indiceDevengado = IndiceOpcional("Devengado");
+        var indicePagado = IndiceOpcional("Pagado");
 
         var resultado = new List<TransaccionSafi>();
         foreach (var fila in hoja.RowsUsed().Where(f => f.RowNumber() > filaEncabezado.RowNumber()))
         {
             var campos = ExcelUtils.ValoresDeFila(fila);
-            var codigo = campos.ElementAtOrDefault(iCodigo)?.Trim() ?? "";
-            if (string.IsNullOrWhiteSpace(codigo)) continue;
+            string Valor(int? indice) => indice.HasValue ? campos.ElementAtOrDefault(indice.Value)?.Trim() ?? "" : "";
+            var codigo = Valor(indiceNoDResp);
+            var noCompro = Valor(indiceNoCompro);
+            var compromiso = Valor(indiceCompromiso);
+            if (nombreHoja.Equals("Comprometido", StringComparison.OrdinalIgnoreCase) &&
+                string.IsNullOrWhiteSpace(codigo)) continue;
 
             resultado.Add(new TransaccionSafi
             {
-                CodigoOriginal = codigo,
-                Nit = campos.ElementAtOrDefault(iNit)?.Trim() ?? "",
-                Proveedor = campos.ElementAtOrDefault(iProveedor)?.Trim() ?? "",
-                Comprometido = CsvUtils.ParseMontoLatino(campos.ElementAtOrDefault(iComprometido) ?? "")
+                NoDResp = codigo,
+                NoCompro = noCompro,
+                Compromiso = compromiso,
+                NoDocuOrig = Valor(indiceNoDocuOrig),
+                Nit = Valor(indiceNit),
+                Proveedor = Valor(indiceProveedor),
+                FF = Valor(indiceFF),
+                Proy = Valor(indiceProy),
+                FR = Valor(indiceFR),
+                AO = Valor(indiceAO),
+                Comprometido = CsvUtils.ParseMontoLatino(Valor(indiceComprometido)),
+                Descomp = CsvUtils.ParseMontoLatino(Valor(indiceDescomp)),
+                Concepto = Valor(indiceConcepto),
+                Devengado = CsvUtils.ParseMontoLatino(Valor(indiceDevengado)),
+                Pagado = CsvUtils.ParseMontoLatino(Valor(indicePagado)),
+                // La hoja Devengado relaciona por "Compromiso".
+                CodigoOriginal = nombreHoja.Equals("Devengado", StringComparison.OrdinalIgnoreCase) ? compromiso : codigo
             });
         }
 

@@ -34,4 +34,22 @@ public static class ExcelUtils
 
         return indice;
     }
+
+    public static int IndiceDe(List<string> encabezados, string[] nombres, string fuente)
+    {
+        var indice = IndiceOpcional(encabezados, nombres);
+        if (indice == null)
+            throw new InvalidOperationException($"No se encontró ninguna de las columnas '{string.Join("', '", nombres)}' en el archivo de {fuente}.");
+        return indice.Value;
+    }
+
+    public static int? IndiceOpcional(List<string> encabezados, params string[] nombres)
+    {
+        foreach (var nombre in nombres)
+        {
+            var indice = encabezados.FindIndex(h => h.Trim().Equals(nombre, StringComparison.OrdinalIgnoreCase));
+            if (indice >= 0) return indice;
+        }
+        return null;
+    }
 }

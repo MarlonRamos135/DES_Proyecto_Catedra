@@ -59,6 +59,7 @@ public class SafiCsvReader
             resultado.Add(new TransaccionSafi
             {
                 CodigoOriginal = codigo,
+                NoDResp = codigo,
                 Nit = campos.ElementAtOrDefault(iNit)?.Trim() ?? "",
                 Proveedor = campos.ElementAtOrDefault(iProveedor)?.Trim() ?? "",
                 Comprometido = CsvUtils.ParseMontoLatino(campos.ElementAtOrDefault(iComprometido) ?? "")

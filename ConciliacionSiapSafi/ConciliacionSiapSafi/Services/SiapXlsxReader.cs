@@ -34,8 +34,13 @@ public class SiapXlsxReader
             if (string.IsNullOrWhiteSpace(numeroContrato)) continue;
 
             decimal.TryParse(campos.ElementAtOrDefault(iMontoContrato)?.Trim(), out var monto);
+            var columnas = encabezados
+                .Select((encabezado, indice) => new { encabezado = encabezado.Trim(), indice })
+                .Where(x => !string.IsNullOrWhiteSpace(x.encabezado))
+                .ToDictionary(x => x.encabezado, x => campos.ElementAtOrDefault(x.indice)?.Trim() ?? "", StringComparer.OrdinalIgnoreCase);
             resultado.Add(new ContratoSiap
             {
+                Columnas = columnas,
                 Actividad = campos.ElementAtOrDefault(iActividad)?.Trim() ?? "",
                 ActividadDescripcion = campos.ElementAtOrDefault(iActividadDesc)?.Trim() ?? "",
                 NumeroContratoOriginal = numeroContrato,

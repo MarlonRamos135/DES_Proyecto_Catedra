@@ -31,7 +31,13 @@ public class ConciliacionService
                     CodigoNormalizado = norm.CodigoNormalizado,
                     TienePatronNumeroAnio = norm.TienePatron,
                     Nit = t.Nit,
-                    Proveedor = t.Proveedor
+                    Proveedor = t.Proveedor,
+                    NoCompro = t.NoCompro,
+                    NoDocuOrig = t.NoDocuOrig,
+                    FF = t.FF,
+                    Proy = t.Proy,
+                    FR = t.FR,
+                    AO = t.AO
                 };
                 grupos[clave] = grupo;
             }
@@ -39,7 +45,23 @@ public class ConciliacionService
             if (!grupo.VariantesOriginales.Contains(t.CodigoOriginal))
                 grupo.VariantesOriginales.Add(t.CodigoOriginal);
 
+            grupo.Comprometidos.Add(t.Comprometido);
             grupo.TotalComprometido += t.Comprometido;
+            grupo.Descomp += t.Descomp;
+            grupo.Devengado += t.Devengado;
+            grupo.Pagado += t.Pagado;
+            if (!string.IsNullOrWhiteSpace(t.NoCompro)) grupo.NoCompro = t.NoCompro;
+            if (!string.IsNullOrWhiteSpace(t.NoDocuOrig))
+                grupo.NoDocuOrig = string.Join(" / ", new[] { grupo.NoDocuOrig, t.NoDocuOrig }
+                    .SelectMany(x => x.Split(" / ", StringSplitOptions.RemoveEmptyEntries))
+                    .Distinct(StringComparer.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(t.Concepto))
+            {
+                var conceptos = (grupo.Concepto + "|" + t.Concepto).Split('|', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim('(', ')'))
+                    .Distinct(StringComparer.OrdinalIgnoreCase);
+                grupo.Concepto = string.Join(" ", conceptos.Select(x => $"({x})"));
+            }
             grupo.CantidadTransacciones++;
         }
 
@@ -74,27 +96,6 @@ public class ConciliacionService
                 metodo = "Código normalizado";
             }
 
-            // 2) Respaldo: proveedor (Nit) + monto, sobre los grupos SAFI sin patrón de código
-            if (match == null && !string.IsNullOrWhiteSpace(s.NitProveedor))
-            {
-                match = sinPatron.FirstOrDefault(g =>
-                    g.Nit == s.NitProveedor &&
-                    g.TotalComprometido == s.MontoContrato);
-
-                // Si no hay coincidencia exacta de monto, se acepta la más cercana del mismo proveedor
-                // dentro de una tolerancia del 1%, ya que "Monto de Contrato" (SIAP) y "Comprometido"
-                // (SAFI) pueden no ser exactamente el mismo concepto contable.
-                if (match == null)
-                {
-                    match = sinPatron
-                        .Where(g => g.Nit == s.NitProveedor && s.MontoContrato > 0)
-                        .OrderBy(g => Math.Abs(g.TotalComprometido - s.MontoContrato))
-                        .FirstOrDefault(g => Math.Abs(g.TotalComprometido - s.MontoContrato) <= s.MontoContrato * 0.01m);
-                }
-
-                if (match != null) metodo = "Proveedor + monto";
-            }
-
             if (match != null) match.YaUsadoEnAlgunaVinculacion = true;
 
             resultado.Add(new ResultadoConciliacion
@@ -112,6 +113,22 @@ public class ConciliacionService
                 // criterio de error. 'Vinculado' significa que se encontró el contrato; la diferencia
                 // entre montos es información para Dirección Financiera, no un estado de fallo.
                 Estado = match == null ? "Sin correspondencia" : "Vinculado"
+                ,ColumnasSiap = s.Columnas
+                ,NoCompro = match?.NoCompro ?? ""
+                ,NoDocuOrig = match?.NoDocuOrig ?? ""
+                ,NoDResp = match?.VariantesOriginales.FirstOrDefault() ?? ""
+                ,Nit = match?.Nit ?? ""
+                ,Proveedor = match?.Proveedor ?? ""
+                ,FF = match?.FF ?? ""
+                ,Proy = match?.Proy ?? ""
+                ,FR = match?.FR ?? ""
+                ,AO = match?.AO ?? ""
+                ,Comprometido = match?.TotalComprometido ?? 0
+                ,ComprometidoSafi = match?.TotalComprometido ?? 0
+                ,Descomp = match?.Descomp ?? 0
+                ,Concepto = match?.Concepto ?? ""
+                ,Devengado = match?.Devengado ?? 0
+                ,Pagado = match?.Pagado ?? 0
             });
         }
 
@@ -129,6 +146,21 @@ public class ConciliacionService
                 MontoSafi = g.TotalComprometido,
                 MetodoVinculo = "Sin vínculo",
                 Estado = "Sin correspondencia"
+                ,NoDResp = string.Join(" / ", g.VariantesOriginales)
+                ,Nit = g.Nit
+                ,Proveedor = g.Proveedor
+                ,NoCompro = g.NoCompro
+                ,NoDocuOrig = g.NoDocuOrig
+                ,FF = g.FF
+                ,Proy = g.Proy
+                ,FR = g.FR
+                ,AO = g.AO
+                ,Comprometido = g.TotalComprometido
+                ,ComprometidoSafi = g.TotalComprometido
+                ,Descomp = g.Descomp
+                ,Concepto = g.Concepto
+                ,Devengado = g.Devengado
+                ,Pagado = g.Pagado
             });
         }
 
